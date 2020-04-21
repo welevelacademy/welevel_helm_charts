@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "prisma-ha.fullname" . }}
+  labels:
+    {{- include "prisma-ha.labels" . | nindent 4 }}
+spec:
+{{- if not .Values.api.enabled }}
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+{{- else }}
+  replicas: 1
+{{- end }}
+
+  selector:
+    matchLabels:
+      app: {{ template "prisma-ha.name" . }}
+      release: {{ .Release.Name }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+         {{- toYaml . | nindent 8 }}
+    {{- end }}      
+      labels:
+        app: {{ template "prisma-ha.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ template "prisma-ha.serviceAccountName" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: prisma
+              containerPort: 4466
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: prisma
+            initialDelaySeconds: 120
+          readinessProbe:
+            httpGet:
+              path: /
+              port: prisma
+            initialDelaySeconds: 0
+          env:
+            - name: CONFIG
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "prisma-ha.fullname" . }}
+                  key: config
+            {{- if .Values.api.secret }}
+            - name: PRISMA_API_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "prisma-ha.fullname" . }}
+                  key: api-secret
+            {{- end}}
+            - name: PRISMA_RABBIT_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "prisma-ha.fullname" . }}
+                  key: pubsub-uri
+            - name: PRISMA_CONFIG_PATH
+              value: "/app/config.yml"
+            - name: PRISMA_DB_CONNECTOR
+              value: {{ .Values.database.connector | quote }}
+            - name: PRISMA_DB_HOST
+              value: {{ template "prisma-ha.database.host" . }}
+            - name: PRISMA_DB_PORT
+              value: {{ template "prisma-ha.database.port" . }}
+            - name: PRISMA_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "prisma-ha.fullname" . }}
+                  key: db-user
+            - name: PRISMA_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "prisma-ha.databaseSecret.fullname" . }}
+                  key: {{ template "prisma-ha.databaseSecret.key" . }}
+            - name: PRISMA_DB_MIGRATIONS
+              value: {{ .Values.database.migrations | quote }}
+            - name: PRISMA_DB_NAME
+              value: {{ .Values.database.name | quote }}
+            - name: PRISMA_DB_SCHEMA
+              value: {{ .Values.database.schema | quote }}              
+            - name: PRISMA_DB_SSL
+              value: {{ .Values.database.ssl | quote }}
+            - name: PRISMA_DB_CONNECTIONLIMIT
+              value: {{ .Values.database.connectionLimit | quote }}
+          resources:
+            {{ toYaml .Values.resources | indent 12 }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
