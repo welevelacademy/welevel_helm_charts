@@ -32,3 +32,8 @@ data:
         {{- end }}
         ssl: $PRISMA_DB_SSL
         connectionLimit: $PRISMA_DB_CONNECTIONLIMIT
+        {{- if .Values.database.raw }}
+        rawAccess: true
+        {{- else }}
+        rawAccess: false
+        {{- end }}

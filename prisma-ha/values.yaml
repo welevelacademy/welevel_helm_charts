@@ -3,6 +3,7 @@
 # ------------------------------------------------------------------------------
 
 # How many pods should be running (default 2)
+# Keep in synk with autoscaling.minReplicas if you need pdb.
 replicaCount: 2
 
 # The docker image to be installed in this chart/pod
@@ -64,6 +65,10 @@ database:
   ##
   migrations: true
   
+  ## Enable database raw query access
+  ##
+  raw: false
+
 messaging:
   ## Prisma's Messages PubSub
   ##
@@ -98,7 +103,7 @@ ingress:
   tls: []
   #  - secretName: prisma-tls
   #    hosts:
-  #      - prisma.local  
+  #      - prisma.local
 
 resources: {}
 #  limits:
@@ -129,7 +134,14 @@ tolerations: []
 ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
 ##
 affinity: {}
-    
+
+## PodDisruptionBudget for pod concurrent disruptions
+## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget
+##
+podDisruptionBudget: {}
+  # maxUnavailable: 1
+  # minAvailable: 1
+
 # ------------------------------------------------------------------------------
 # RabbitMQ:
 # ------------------------------------------------------------------------------

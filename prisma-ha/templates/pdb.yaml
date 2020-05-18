@@ -1,0 +1,16 @@
+{{- if .Values.podDisruptionBudget -}}
+{{- if gt (int .Values.replicaCount) 1 }}
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "prisma-ha.fullname" . }}
+  labels:
+    {{- include "prisma-ha.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "prisma-ha.name" . }}
+      release: {{ .Release.Name }}
+{{ toYaml .Values.podDisruptionBudget | indent 2 }}
+{{- end }}
+{{- end }}
