@@ -13,12 +13,12 @@ image:
   repository: welevelacademy/prisma-prod
 
   ## Prisma image version
-  ##    
+  ##
   tag: 1.34.10
-  
+
   ## Specify an imagePullPolicy
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
-  ##  
+  ##
   pullPolicy: IfNotPresent
 
 serviceAccount:
@@ -43,7 +43,7 @@ database:
   ## Database name where model will be created
   ##
   name: prisma
-  
+
   ## Database schema for the model will be created (Used only on PostgreSQL)
   ##
   schema: public
@@ -64,7 +64,7 @@ database:
   ## Enable database migrations
   ##
   migrations: true
-  
+
   ## Enable database raw query access
   ##
   raw: false
@@ -75,30 +75,32 @@ messaging:
   enabled: false
   ## The uri for RabbitMQ
   rabbitUri: ""
-  
+
 api:
   ## Prisma's Management API
   ##
   enabled: false
   ## Prisma's Management API authentication
   ##
-  auth: false  
+  auth: false
   ## Secret to use. If it isn't specified and 'api.auth' is set to 'true',
   ## a random generated one will be used
   ##
-  # secret: ""  
+  # secret: ""
 
 service:
   type: ClusterIP
   port: 80
-  
+
 ingress:
   enabled: false
-  annotations: {}
+  annotations:
+    {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   path: /
-  hosts: []
+  hosts:
+    []
     # - prisma.local
   tls: []
   #  - secretName: prisma-tls
@@ -117,9 +119,9 @@ autoscaling:
   enabled: false
   minReplicas: 2
   maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
-  
+  targetCPU: 80
+  # targetMemory: 80
+
 ## Node labels for pod assignment
 ## ref: https://kubernetes.io/docs/user-guide/node-selection/
 ##
@@ -138,7 +140,8 @@ affinity: {}
 ## PodDisruptionBudget for pod concurrent disruptions
 ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget
 ##
-podDisruptionBudget: {}
+podDisruptionBudget:
+  {}
   # maxUnavailable: 1
   # minAvailable: 1
 
@@ -148,169 +151,127 @@ podDisruptionBudget: {}
 
 rabbitmq:
   ## If true, install the RabbitMQ chart alongside Prisma
+  ## ref: https://github.com/bitnami/charts/blob/master/bitnami/rabbitmq
+  ##
   enabled: true
-  
-  ## RabbitMQ image version
-  ## ref: https://hub.docker.com/r/bitnami/rabbitmq/tags/
-  ##
-  imageTag: "3.8.3"
-  
-  ## Specify a RabbitMQ imagePullPolicy
-  ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
-  ##
-  pullPolicy: IfNotPresent
-  
-  ## Replica count, set to 2 to provide a default HA cluster
-  replicas: 2
 
-  ## does your cluster have rbac enabled? assume yes by default  
-  rbacEnabled: true
+  replicaCount: 2
 
-  ## section of specific values for rabbitmq
-  rabbitmq:  
-    ## RabbitMQ application username
-    ## ref: https://github.com/bitnami/bitnami-docker-rabbitmq#environment-variables
+  ## Bitnami RabbitMQ image version
+  ##
+  image:
+    registry: docker.io
+    repository: bitnami/rabbitmq
+    tag: 3.11.0-debian-11-r1
+    digest: ""
+    ## set to true if you would like to see extra information on logs
+    ## It turns BASH and/or NAMI debugging in the image
+    ##
+    debug: false
+    ## Specify a imagePullPolicy
+    ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+    ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ## Example:
+    ## pullSecrets:
+    ##   - myRegistryKeySecretName
+    ##
+    pullSecrets: []
+
+  ## RabbitMQ Authentication parameters
+  ##
+  auth:
+    ## @param auth.username RabbitMQ application username
+    ## ref: https://github.com/bitnami/containers/tree/main/bitnami/rabbitmq#environment-variables
     ##
     username: user
-
-    ## RabbitMQ application password
-    ## ref: https://github.com/bitnami/bitnami-docker-rabbitmq#environment-variables
+    ## @param auth.password RabbitMQ application password
+    ## ref: https://github.com/bitnami/containers/tree/main/bitnami/rabbitmq#environment-variables
     ##
-    # password:
-    # existingPasswordSecret: name-of-existing-secret
-
-    ## Erlang cookie to determine whether different nodes are allowed to communicate with each other
-    ## ref: https://github.com/bitnami/bitnami-docker-rabbitmq#environment-variables
+    password: ""
+    ## @param auth.existingPasswordSecret Existing secret with RabbitMQ credentials (must contain a value for `rabbitmq-password` key)
+    ## e.g:
+    ## existingPasswordSecret: name-of-existing-secret
     ##
-    # erlangCookie:
-    # existingErlangSecret: name-of-existing-secret
-    
-    ## Disk free space limit of the partition on which RabbitMQ is storing data
-    ## ref: https://github.com/bitnami/bitnami-docker-rabbitmq#environment-variables
-    ##    
-    diskFreeLimit: '"6GiB"'
-    
-  service:
-    type: ClusterIP
-    ## Node port
-    ## ref: https://github.com/bitnami/bitnami-docker-rabbitmq#environment-variables
+    existingPasswordSecret: ""
+    ## @param auth.erlangCookie Erlang cookie to determine whether different nodes are allowed to communicate with each other
+    ## ref: https://github.com/bitnami/containers/tree/main/bitnami/rabbitmq#environment-variables
     ##
-    # nodePort: 30672
-
-    ## Set the LoadBalancerIP
+    erlangCookie: ""
+    ## @param auth.existingErlangSecret Existing secret with RabbitMQ Erlang cookie (must contain a value for `rabbitmq-erlang-cookie` key)
+    ## e.g:
+    ## existingErlangSecret: name-of-existing-secret
     ##
-    # loadBalancerIP:
+    existingErlangSecret: ""
 
-    ## Node port Tls
-    ##
-    # nodeTlsPort: 30671
-
-    ## Amqp port
-    ## ref: https://github.com/bitnami/bitnami-docker-rabbitmq#environment-variables
-    ##
-    port: 5672
-
-    ## Amqp Tls port
-    ##
-    tlsPort: 5671
-
-    ## Dist port
-    ## ref: https://github.com/bitnami/bitnami-docker-rabbitmq#environment-variables
-    ##
-    distPort: 25672
-
-    ## RabbitMQ Manager port
-    ## ref: https://github.com/bitnami/bitnami-docker-rabbitmq#environment-variables
-    ##
-    managerPort: 15672
-
-  persistence:
-    ## this enables PVC templates that will create one per pod  
-    enabled: true
-
-    ## rabbitmq data Persistent Volume Storage Class
-    ## If defined, storageClassName: <storageClass>
-    ## If set to "-", storageClassName: "", which disables dynamic provisioning
-    ## If undefined (the default) or set to null, no storageClassName spec is
-    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
-    ##   GKE, AWS & OpenStack)
-    ##
-    # storageClass: "-"
-    ## selector can be used to match an existing PersistentVolume
-    # selector:
-    #   matchLabels:
-    #     app: my-app
-    accessMode: ReadWriteOnce
-
-    # If you change this value, you might have to adjust `rabbitmq.diskFreeLimit` as well.
-    size: 8Gi
-
-  ## Configure resource requests and limits
-  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ## Role Based Access
+  ## ref: https://kubernetes.io/docs/admin/authorization/rbac/
   ##
-  resources:
-    requests:
-      memory: 512Mi
-      cpu: 100m
+  rbac:
+    ## @param rbac.create Whether RBAC rules should be created
+    ## binding RabbitMQ ServiceAccount to a role
+    ## that allows RabbitMQ pods querying the K8s API
+    ##
+    create: true
 
-  ## Configure the ingress resource that allows you to access the
-  ## Wordpress installation. Set up the URL
-  ## ref: http://kubernetes.io/docs/user-guide/ingress/
-  ##
-  ingress:
-    ## Set to true to enable ingress record generation
-    enabled: false
-
-    #The following settings are to configure the frequency of the lifeness and readiness probes
-  livenessProbe:
-    enabled: true
-    initialDelaySeconds: 120
-    timeoutSeconds: 5
-    failureThreshold: 6
-
-  readinessProbe:
-    enabled: true
-    initialDelaySeconds: 10
-    timeoutSeconds: 3
-    periodSeconds: 5
-    
 # ------------------------------------------------------------------------------
 # PostgreSQL:
 # ------------------------------------------------------------------------------
 
 postgresql:
   ## If true, install the PostgreSQL chart alongside Prisma
-  ## ref: https://github.com/kubernetes/charts/tree/master/stable/postgresql
+  ## ref: https://github.com/bitnami/charts/blob/master/bitnami/postgresql
   ##
   enabled: false
 
-  ## PostgresSQL image version
-  ## ref: https://hub.docker.com/r/library/postgres/tags/
+  ## Bitnami PostgreSQL image version
   ##
-  imageTag: "9.6.2"
+  image:
+    registry: docker.io
+    repository: bitnami/postgresql
+    tag: 14.5.0-debian-11-r24
+    digest: ""
+    ## Specify a imagePullPolicy
+    ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+    ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ## Example:
+    ## pullSecrets:
+    ##   - myRegistryKeySecretName
+    ##
+    pullSecrets: []
+    ## Set to true if you would like to see extra information on logs
+    ##
+    debug: false
 
-  ## Specify a PostgreSQL imagePullPolicy
-  ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+  ## Authentication parameters
   ##
-  imagePullPolicy: "IfNotPresent"
+  auth:
+    ## @param auth.enablePostgresUser Assign a password to the "postgres" admin user. Otherwise, remote access will be blocked for this user
+    ##
+    enablePostgresUser: true
+    ## @param auth.postgresPassword Password for the "postgres" admin user. Ignored if `auth.existingSecret` with key `postgres-password` is provided
+    ##
+    postgresPassword: ""
+    ## @param auth.username Name for a custom user to create
+    ##
+    username: "prisma"
+    ## @param auth.password Password for the custom user to create. Ignored if `auth.existingSecret` with key `password` is provided
+    ##
+    password: ""
+    ## @param auth.database Name for a custom database to create
+    ##
+    database: "prisma"
 
   ## Persist data to a persistent volume
   ##
   persistence:
     enabled: false
-
-  ## PostgreSQL credentials
-  ##
-  postgresqlUsername: prisma
-  postgresqlPassword: ""
-  postgresqlDatabase: prisma
-
-  ## PostgreSQL service TCP port
-  ##
-  service:
-    port: 5432
-
-  ## Configure PostgreSQL resource requests and limits
-  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
-  ##
-  resources: {}    

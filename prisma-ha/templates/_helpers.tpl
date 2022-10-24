@@ -87,7 +87,7 @@ else use user-provided uri
 {{- define "prisma-ha.messaging.uri" }}
 {{- if .Values.rabbitmq.enabled -}}
 {{- $host := include "prisma-ha.rabbitmq.fullname" . -}}
-{{- printf "amqp://%s:%s@%s:%g" .Values.rabbitmq.rabbitmq.username .Values.rabbitmq.rabbitmq.password $host .Values.rabbitmq.service.port }}
+{{- printf "amqp://%s:%s@%s:%g" .Values.rabbitmq.auth.username .Values.rabbitmq.auth.password $host .Values.rabbitmq.service.ports.amqp }}
 {{- else -}}
 {{- .Values.messaging.rabbitUri | quote }}
 {{- end -}}
@@ -134,7 +134,7 @@ else use user-provided port
 */}}
 {{- define "prisma-ha.database.port" }}
 {{- if .Values.postgresql.enabled -}}
-{{- default "5432" ( .Values.postgresql.service.port | quote ) }}
+{{- default "5432" ( .Values.postgresql.containerPorts.postgresql | quote ) }}
 {{- else -}}
 {{- .Values.database.port | quote }}
 {{- end -}}
