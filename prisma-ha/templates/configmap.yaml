@@ -13,7 +13,7 @@ data:
     enableManagementApi: false
     {{- end }}
     {{- if .Values.api.auth }}
-    managementApiSecret: $PRISMA_MANAGEMENT_API_SECRET
+    managementApiSecret: $PRISMA_API_SECRET
     {{- end }}
     {{- if .Values.messaging.enabled }}
     rabbitUri: $PRISMA_RABBIT_URI
